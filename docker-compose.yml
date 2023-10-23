@@ -1,0 +1,11 @@
+version: '3'
+services:
+  dummyjson:
+    build: .
+    ports:
+      - "14484:14484"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+    volumes:
+      - .:/app
