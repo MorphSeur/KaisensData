@@ -1,5 +1,4 @@
-from urllib.request import urlopen
-import json
+import requests
 import pandas as pd
 from flask import Flask, render_template
 
@@ -7,32 +6,16 @@ app = Flask(__name__)
 
 @app.route('/extract', methods=['GET'])
 def extract():
-    carts = urlopen("https://dummyjson.com/carts/")
-    users = urlopen("https://dummyjson.com/users/")
-    carts_data = json.loads(carts.read())
-    users_data = json.loads(users.read())
+    carts = requests.get("https://dummyjson.com/carts/").json()
+    users = requests.get("https://dummyjson.com/users/").json()
 
-    extractCartsList = []
-    extractUsersList = []
-
-    for i in range(carts_data["limit"]):
-        extractCarts = carts_data["carts"][i]["userId"]
-        extractCartsList.append(extractCarts)
-
-    for j in range(users_data["limit"]):
-        extractUsers = users_data["users"][j]["id"]
-        extractUsersList.append(extractUsers)
+    extractCartsList = [cart["userId"] for cart in carts["carts"]]
+    extractUsersList = [user["id"] for user in users["users"]]
 
     combinedUsers = list(set(extractCartsList).intersection(extractUsersList))
 
-    totalList = []
-    usersList = []
-
-    for i in combinedUsers:
-        if i < carts_data["limit"]:
-            total = carts_data["carts"][i]["total"]
-            totalList.append(total)
-            usersList.append(i)
+    totalList = [carts["carts"][i]["total"] for i in combinedUsers if i < carts["limit"]]
+    usersList = [i for i in combinedUsers if i < carts["limit"]]
 
     finalList = pd.DataFrame(
         {'UserId': usersList,
